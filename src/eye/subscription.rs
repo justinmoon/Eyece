@@ -1,4 +1,6 @@
-use std::{io, sync::mpsc};
+use std::{fmt, io, sync::mpsc};
+
+use image;
 
 use eye::device::Device as Dev;
 use eye::hal::traits::{Device, Stream};
@@ -131,6 +133,7 @@ where
         Box::pin(futures::stream::unfold(
             State::Ready(self.uri),
             |state| async move {
+                println!("sub");
                 match state {
                     State::Ready(uri) => {
                         let (tx, rx) = mpsc::channel();
@@ -322,7 +325,7 @@ where
                                     pixels,
                                 );
                                 Some((
-                                    Event::Stream(handle),
+                                    Event::Stream((handle, None)),
                                     State::Streaming {
                                         device,
                                         stream,
@@ -343,13 +346,24 @@ where
     }
 }
 
-#[derive(Debug)]
 pub enum Event {
     Error(io::Error),
     Connected(Connection),
     Disconnected,
     Response(Response),
-    Stream(iced::image::Handle),
+    Stream((iced::image::Handle, Option<image::DynamicImage>)),
+}
+
+impl fmt::Debug for Event {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Event::Stream(_) => write!(f, "stream"),
+            Event::Error(_) => write!(f, "error"),
+            Event::Connected(_) => write!(f, "connected"),
+            Event::Disconnected => write!(f, "Disconnected"),
+            Event::Response(_) => write!(f, "Response"),
+        }
+    }
 }
 
 enum State<'a> {

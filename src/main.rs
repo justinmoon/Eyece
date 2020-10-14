@@ -3,25 +3,40 @@ mod model;
 
 use std::collections::VecDeque;
 
-use iced::widget::image;
+use iced::widget::image::Handle as ImageHandle;
 use iced::{
     button, executor, pick_list, scrollable, slider, Application, Button, Checkbox, Column,
     Command, Element, Image, Length, PickList, Row, Scrollable, Settings, Slider, Subscription,
     Text,
 };
+use image::DynamicImage;
 
 fn main() {
     Eyece::run(Settings::default())
 }
 
-#[derive(Default)]
+//#[derive(Default)]
 struct Eyece {
     connection: Option<eye::Connection>,
-    image: Option<image::Handle>,
+    image: Option<ImageHandle>,
+    qr: Option<DynamicImage>,
 
     config: Config,
     controls: Controls,
     log: Log,
+}
+
+impl Default for Eyece {
+    fn default() -> Self {
+        Self {
+            connection: None,
+            image: None,
+            qr: None,
+            config: Config::default(),
+            controls: Controls::default(),
+            log: Log::default(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -233,8 +248,9 @@ impl Application for Eyece {
                         )),
                     },
                 },
-                eye::subscription::Event::Stream(handle) => {
+                eye::subscription::Event::Stream((handle, qr)) => {
                     self.image = Some(handle.clone());
+                    self.qr = qr.clone();
                 }
             },
         }

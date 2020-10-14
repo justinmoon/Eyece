@@ -5,7 +5,9 @@ authors = ["Christopher N. Hesse <raymanfx@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-eye = { git = "https://github.com/raymanfx/eye-rs", features = ["openpnp"], rev = "293b154f" }
+eye = { git = "https://github.com/raymanfx/eye-rs", default-features = false, features = ["openpnp"], rev = "293b154f" }
 ffimage = "^0.8"
 iced = { git = "https://github.com/hecrj/iced", features = ["image", "tokio"], rev = "bbc6e91" }
 iced_futures = { git = "https://github.com/hecrj/iced", rev = "bbc6e91" }
+bardecoder = { git = "https://github.com/piderman314/bardecoder" }
+image = "0.22.5"

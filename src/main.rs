@@ -19,7 +19,7 @@ fn main() {
 struct Eyece {
     connection: Option<eye::Connection>,
     image: Option<ImageHandle>,
-    qr: Option<DynamicImage>,
+    qr: Option<String>,
 
     config: Config,
     controls: Controls,
@@ -268,6 +268,12 @@ impl Application for Eyece {
             image = image.push(Image::new(handle.clone()));
         }
 
+        let qr = Text::new(format!("{:?}", self.qr)).size(50);
+
+        if let Some(_) = self.qr {
+            panic!("qr");
+        };
+
         Column::new()
             .padding(PADDING)
             .push(self.config.view().map(|msg| Message::ConfigMessage(msg)))
@@ -279,6 +285,7 @@ impl Application for Eyece {
                 ),
             )
             .push(self.log.view().map(|msg| Message::LogMessage(msg)))
+            .push(qr)
             .into()
     }
 }

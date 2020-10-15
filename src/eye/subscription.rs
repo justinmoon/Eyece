@@ -1,6 +1,8 @@
 use std::{fmt, io, sync::mpsc};
 
+use bardecoder;
 use image;
+use image::DynamicImage;
 
 use eye::device::Device as Dev;
 use eye::hal::traits::{Device, Stream};
@@ -24,6 +26,26 @@ impl Subscription {
     pub fn new<S: Into<String>>(uri: S) -> Self {
         Subscription { uri: uri.into() }
     }
+}
+
+fn decode_qr(frame: &ImageView, pixels: &[u8]) -> Option<String> {
+    //let chars: Vec<u8> = pixels.into_iter().take(20).collect();
+    let img: image::ImageBuffer<image::Bgra<_>, Vec<u8>> =
+        image::ImageBuffer::from_raw(frame.width(), frame.height(), pixels.to_vec()).unwrap();
+    let img = DynamicImage::ImageBgra8(img);
+    let decoder = bardecoder::default_decoder();
+    let results = decoder.decode(&img);
+    for result in results {
+        // FIXME: combinator
+        match result {
+            Ok(r) => return Some(r),
+            Err(_) => {
+                println!("scan error");
+                return None;
+            }
+        }
+    }
+    None
 }
 
 impl Subscription {
@@ -133,7 +155,6 @@ where
         Box::pin(futures::stream::unfold(
             State::Ready(self.uri),
             |state| async move {
-                println!("sub");
                 match state {
                     State::Ready(uri) => {
                         let (tx, rx) = mpsc::channel();
@@ -322,10 +343,13 @@ where
                                 let handle = iced::image::Handle::from_pixels(
                                     frame.width(),
                                     frame.height(),
-                                    pixels,
+                                    pixels.clone(),
                                 );
+                                let qr = decode_qr(&frame, &pixels);
+
+                                println!("qr: {:?}", qr);
                                 Some((
-                                    Event::Stream((handle, None)),
+                                    Event::Stream((handle, qr)),
                                     State::Streaming {
                                         device,
                                         stream,
@@ -351,7 +375,7 @@ pub enum Event {
     Connected(Connection),
     Disconnected,
     Response(Response),
-    Stream((iced::image::Handle, Option<image::DynamicImage>)),
+    Stream((iced::image::Handle, Option<String>)),
 }
 
 impl fmt::Debug for Event {
